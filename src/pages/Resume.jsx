@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios'; 
 import axiosPlus from '../components/Axios';
-import {jwtDecode} from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode'; 
 
 const Resume = () => {
     const [file, setFile] = useState(null);
@@ -99,6 +99,7 @@ const Resume = () => {
                                 />
                             </div>
                         </div>
+                        <p className="text-sm text-gray-500 mt-2">Please upload resume in PNG, JPG, or JPEG format.</p>
                         {uploadError && <p className="text-red-500 text-center">{uploadError}</p>}
                         {uploadSuccess && <p className="text-green-500 text-center">{uploadSuccess}</p>}
                         <div>

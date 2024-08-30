@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios'; 
 import axiosPlus from '../components/Axios';
-import {jwtDecode} from 'jwt-decode'; 
+ 
 
 const Resume = () => {
     const [file, setFile] = useState(null);
@@ -42,7 +42,7 @@ const Resume = () => {
 
         try {
             const cloudinaryUrl = await uploadToCloudinary();
-            console.log("Cloudinary URL:", cloudinaryUrl, userId);
+            console.log("Cloudinary URL:", cloudinaryUrl);
             await axiosPlus.post('/upload', { resumeUrl: cloudinaryUrl });
             setUploadSuccess('Resume uploaded successfully!');
             setUploadError('');

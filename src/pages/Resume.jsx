@@ -40,21 +40,10 @@ const Resume = () => {
             return;
         }
 
-        let userId;
-        try {
-            const token = localStorage.getItem('token');
-            const decoded = jwtDecode(token);
-            userId = decoded.id;
-        } catch (err) {
-            console.error("Failed to get user id from token:", err.message);
-            setUploadError("Failed to get user id from token");
-            return;
-        }
-
         try {
             const cloudinaryUrl = await uploadToCloudinary();
             console.log("Cloudinary URL:", cloudinaryUrl, userId);
-            await axiosPlus.post('/upload', { userId, resumeUrl: cloudinaryUrl });
+            await axiosPlus.post('/upload', { resumeUrl: cloudinaryUrl });
             setUploadSuccess('Resume uploaded successfully!');
             setUploadError('');
             setFile(null);

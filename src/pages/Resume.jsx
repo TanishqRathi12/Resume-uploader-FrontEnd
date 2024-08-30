@@ -1,6 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios'; 
+import axiosPlus from '../components/Axios';
+import {jwtDecode} from 'jwt-decode';
 
 const Resume = () => {
+    const [file, setFile] = useState(null);
+    const [uploadSuccess, setUploadSuccess] = useState('');
+    const [uploadError, setUploadError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const uploadToCloudinary = async () => {
+        const data = new FormData(); 
+        data.append('file', file);
+        data.append('upload_preset', 'MyCloud'); 
+
+        try {
+            setLoading(true);
+            const response = await axios.post(
+                "https://api.cloudinary.com/v1_1/divlsorxk/image/upload", 
+                data
+            );
+            console.log("Image Upload Success:", response.data.secure_url);
+            return response.data.secure_url;
+        } catch (err) {
+            console.error("Image Upload Failed:", err.message);
+            setUploadError("Image upload failed");
+            throw new Error("Image upload failed");
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!file) {
+            setUploadError('Please select a resume to upload.');
+            return;
+        }
+
+        let userId;
+        try {
+            const token = localStorage.getItem('token');
+            const decoded = jwtDecode(token);
+            userId = decoded.id;
+        } catch (err) {
+            console.error("Failed to get user id from token:", err.message);
+            setUploadError("Failed to get user id from token");
+            return;
+        }
+
+        try {
+            const cloudinaryUrl = await uploadToCloudinary();
+            console.log("Cloudinary URL:", cloudinaryUrl, userId);
+            await axiosPlus.post('/upload', { userId, resumeUrl: cloudinaryUrl });
+            setUploadSuccess('Resume uploaded successfully!');
+            setUploadError('');
+            setFile(null);
+        } catch (err) {
+            console.error("Failed to upload resume:", err.message);
+            setUploadError('Failed to upload resume.');
+            setUploadSuccess('');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-100">
             <nav className="bg-indigo-600 shadow-lg">
@@ -11,30 +77,6 @@ const Resume = () => {
                                 Resume Uploader
                             </a>
                         </div>
-                        <div className="hidden md:flex space-x-4">
-                            <a href="/" className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                                Home
-                            </a>
-                            <a href="/about" className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                                About
-                            </a>
-                            <a href="/projects" className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                                Projects
-                            </a>
-                            <a href="/resume" className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                                Resume
-                            </a>
-                            <a href="/contact" className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                                Contact
-                            </a>
-                        </div>
-                        <div className="md:hidden flex items-center">
-                            <button className="text-white focus:outline-none">
-                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                </svg>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </nav>
@@ -42,7 +84,7 @@ const Resume = () => {
                 <div className="max-w-md w-full bg-white shadow-lg rounded-lg px-6 py-8">
                     <h2 className="text-3xl font-bold mb-4 text-center text-indigo-600">Upload Your Resume</h2>
                     <p className="text-gray-600 text-center mb-6">Submit your resume to kickstart your career with us.</p>
-                    <form className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="resume" className="block text-sm font-medium text-gray-700">
                                 Choose a file
@@ -52,16 +94,20 @@ const Resume = () => {
                                     id="resume"
                                     name="resume"
                                     type="file"
+                                    onChange={handleFileChange}
                                     className="py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm"
                                 />
                             </div>
                         </div>
+                        {uploadError && <p className="text-red-500 text-center">{uploadError}</p>}
+                        {uploadSuccess && <p className="text-green-500 text-center">{uploadSuccess}</p>}
                         <div>
                             <button
                                 type="submit"
                                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                disabled={loading}
                             >
-                                Upload Resume
+                                {loading ? 'Uploading...' : 'Upload Resume'}
                             </button>
                         </div>
                     </form>

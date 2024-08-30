@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
+import axios from '../components/Axios';
+import { useAuth } from '../Context/authContext';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
@@ -13,9 +20,24 @@ const Login = () => {
         setPassword(e.target.value);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+
+        try {
+            await axios.post('/login', formData);
+            setSuccess('Login successful!');
+            login();
+            setError('');
+            setEmail('');
+            setPassword('');
+            navigate('/');
+        } catch (err) {
+            setError('Login failed. Please try again.');
+            setSuccess('');
+        }
     };
 
     return (
@@ -43,6 +65,8 @@ const Login = () => {
                             placeholder="Enter your password"
                         />
                     </div>
+                    {error && <p className="text-red-500 text-center">{error}</p>}
+                    {success && <p className="text-green-500 text-center">{success}</p>}
                     <button
                         type="submit"
                         className="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none"
